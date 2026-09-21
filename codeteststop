@@ -1,0 +1,15 @@
+async def handle_client(websocket):
+    print("Client connected!")
+
+    try:
+        async for message in websocket:
+            print("Received:", message)
+
+            await websocket.send("action")
+            print("Sent action")
+
+    except Exception as e:
+        print("Connection error:", e)
+
+    finally:
+        print("Client disconnected!")
