@@ -1,0 +1,88 @@
+import asyncio
+import websockets
+
+
+async def handle_client(websocket):
+    print("Client connected!")
+
+    try:
+        async for message in websocket:
+            print("Received:", message)
+
+            try:
+                # Split the comma-separated data from TurboWarp
+                values = message.split(",")
+
+                # Make sure we received all 8 values
+                if len(values) != 8:
+                    print("Wrong number of values:", len(values))
+                    continue
+
+                # Decode the values
+                player_score = float(values[0])
+                player_y = float(values[1])
+                ball_y = float(values[2])
+                ball_x = float(values[3])
+                ball_vy = float(values[4])
+                ball_vx = float(values[5])
+                ai_y = float(values[6])
+                ai_score = float(values[7])
+
+                print("Decoded:")
+                print("Player score:", player_score)
+                print("Player Y:", player_y)
+                print("Ball Y:", ball_y)
+                print("Ball X:", ball_x)
+                print("Ball VY:", ball_vy)
+                print("Ball VX:", ball_vx)
+                print("AI Y:", ai_y)
+                print("AI score:", ai_score)
+
+                # -------------------------
+                # AI DECISION
+                # -------------------------
+
+                # How close the ball must be to the AI paddle
+                dead_zone = 5
+
+                if ball_y > ai_y + dead_zone:
+                    action = "DOWN"
+
+                elif ball_y < ai_y - dead_zone:
+                    action = "UP"
+
+                else:
+                    action = "STAY"
+
+                # -------------------------
+                # SEND COMMAND TO TURBOWARP
+                # -------------------------
+
+                await websocket.send(action)
+
+                print("Sent:", action)
+
+            except Exception as e:
+                print("Could not decode/process data:", e)
+
+    except Exception as e:
+        print("Connection error:", e)
+
+    finally:
+        print("Client disconnected!")
+
+
+async def main():
+    async with websockets.serve(
+        handle_client,
+        "0.0.0.0",
+        8765
+    ):
+        print("WebSocket server running on port 8765")
+
+        # Keep the server running
+        await asyncio.Future()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
